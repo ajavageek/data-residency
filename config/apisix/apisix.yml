@@ -1,0 +1,31 @@
+upstreams:
+  - id: 1
+    nodes:
+      "appeurope:8080": 1
+  - id: 2
+    nodes:
+      "appusa:8080": 1
+routes:
+  - uri: /thingies*
+    name: Europe
+    upstream_id: 1
+    vars: [["http_x-country", "==", "fr"]]
+    priority: 3
+  - uri: /thingies*
+    name: USA
+    upstream_id: 2
+    vars: [["http_x-country", "==", "us"]]
+    priority: 2
+  - uri: /thingies*
+    name: default
+    upstream_id: 1
+    priority: 1
+global_rules:
+  - id: 1
+    plugins:
+      opentelemetry:
+        sampler:
+          name: always_on
+        additional_attributes:
+          - http_x-country
+#END

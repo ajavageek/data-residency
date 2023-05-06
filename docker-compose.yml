@@ -1,0 +1,54 @@
+version: "3"
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+  apisix:
+    image: apache/apisix:3.6.0-debian
+    volumes:
+      - ./config/apisix/config.yml:/usr/local/apisix/conf/config.yaml:ro
+      - ./config/apisix/apisix.yml:/usr/local/apisix/conf/apisix.yaml:ro
+    ports:
+      - "9080:9080"
+  appeurope:
+    build: ./app
+    volumes:
+      - ./config/app/sharding.yml:/etc/sharding.yml
+    environment:
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.apache.shardingsphere.driver.ShardingSphereDriver
+      SPRING_DATASOURCE_URL: "jdbc:shardingsphere:absolutepath:/etc/sharding.yml"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=europe
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+    depends_on:
+      - dbeurope
+  appusa:
+    build: ./app
+    volumes:
+      - ./config/app/sharding.yml:/etc/sharding.yml
+    environment:
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.apache.shardingsphere.driver.ShardingSphereDriver
+      SPRING_DATASOURCE_URL: "jdbc:shardingsphere:absolutepath:/etc/sharding.yml"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=usa
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+    depends_on:
+      - dbusa
+  dbeurope:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: root
+    volumes:
+      - ./config/postgres/europe:/docker-entrypoint-initdb.d:ro
+  dbusa:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: root
+    volumes:
+      - ./config/postgres/usa:/docker-entrypoint-initdb.d:ro

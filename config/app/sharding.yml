@@ -1,0 +1,28 @@
+dataSources:
+  europe:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.postgresql.Driver
+    jdbcUrl: "jdbc:postgresql://dbeurope:5432/postgres?currentSchema=europe"
+    username: postgres
+    password: root
+  usa:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.postgresql.Driver
+    jdbcUrl: "jdbc:postgresql://dbusa:5432/postgres?currentSchema=usa"
+    username: postgres
+    password: root
+rules:
+  - !SHARDING
+    tables:
+      owner:
+        actualDataNodes: europe.owner,usa.owner
+        tableStrategy:
+          standard:
+            shardingColumn: country
+            shardingAlgorithmName: by_country
+    shardingAlgorithms:
+      by_country:
+        type: CLASS_BASED
+        props:
+          strategy: STANDARD
+          algorithmClassName: ch.frankel.blog.dataresidency.LocationBasedSharding
