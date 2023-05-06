@@ -1,0 +1,26 @@
+dataSources:
+  europe:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.h2.Driver
+    jdbcUrl: jdbc:h2:file:~/testdbx
+    username: sa
+  usa:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.h2.Driver
+    jdbcUrl: jdbc:h2:file:~/testdby
+    username: sa
+rules:
+  - !SHARDING
+    tables:
+      owner:
+        actualDataNodes: europe.owner,usa.owner
+        tableStrategy:
+          standard:
+            shardingColumn: country
+            shardingAlgorithmName: by_country
+    shardingAlgorithms:
+      by_country:
+        type: CLASS_BASED
+        props:
+          strategy: STANDARD
+          algorithmClassName: ch.frankel.blog.dataresidency.LocationBasedSharding
